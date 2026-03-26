@@ -12,6 +12,7 @@ Azure for Students subscriptions do not include access to Azure OpenAI resources
 - Save it in your `Deployment Files` folder
 - **Do not modify this file** — it contains the shared API key and is ready to use as-is
 - **Do not push this file to any public GitHub repository** — add `secrets.yaml` to your `.gitignore`
+  > **⚠️ WARNING:** Any student who fails to comply with this and pushes the `secrets.yaml` file to a public repository will receive a **grade of zero**. This is **non-negotiable**.
 
 ### 2. Skip the Rest of Step 3
 You do **not** need to:
