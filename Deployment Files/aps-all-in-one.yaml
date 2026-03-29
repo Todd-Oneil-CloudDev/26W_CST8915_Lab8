@@ -5,7 +5,7 @@ metadata:
   name: mongodb
 spec:
   serviceName: mongodb # Associated headless service for DNS resolution
-  replicas: 1 # Number of MongoDB replicas
+  replicas: 3 # Number of MongoDB replicas
   selector:
     matchLabels:
       app: mongodb # Labels to match for this StatefulSet
@@ -37,6 +37,17 @@ spec:
                 - db.runCommand('ping').ok
             initialDelaySeconds: 5 # Wait time before starting probe
             periodSeconds: 5 # Interval between probes
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
 ---
 # Service to expose MongoDB
 apiVersion: v1
@@ -48,7 +59,7 @@ spec:
     - port: 27017 # MongoDB service port
   selector:
     app: mongodb # Target pods with label `app: mongodb`
-  type: ClusterIP # Internal cluster service
+  clusterIP: None # Headless Service
 ---
 # StatefulSet for RabbitMQ
 apiVersion: apps/v1
@@ -58,6 +69,14 @@ metadata:
 spec:
   serviceName: rabbitmq # Headless service for RabbitMQ
   replicas: 1 # Single replica
+  volumeClaimTemplates:
+    - metadata:
+        name: rabbitmq-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 500Mi
   selector:
     matchLabels:
       app: rabbitmq
@@ -92,6 +111,8 @@ spec:
             - name: rabbitmq-enabled-plugins
               mountPath: /etc/rabbitmq/enabled_plugins
               subPath: enabled_plugins
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
       volumes:
         - name: rabbitmq-enabled-plugins
           configMap:
@@ -136,7 +157,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
         - name: order-service
-          image: ramymohamed/order-service-l8:latest # Custom image for order service
+          image: clouddevac/order-service:latest # Custom image for order service
           ports:
             - containerPort: 3000 # Order service listens on this port
           env: # Environment variables for configuration
@@ -230,7 +251,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
         - name: makeline-service
-          image: ramymohamed/makeline-service-l8:latest # Custom Makeline service image
+          image: clouddevac/makeline-service:latest # Custom Makeline service image
           ports:
             - containerPort: 3001 # Makeline service listens on this port
           env: # Environment variables for configuration
@@ -309,7 +330,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
         - name: product-service
-          image: ramymohamed/product-service-l8:latest # Custom product service image
+          image: clouddevac/product-service:latest # Custom product service image
           ports:
             - containerPort: 3002 # Product service listens on this port
           env: # Environment variables for configuration
@@ -370,7 +391,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
         - name: store-front
-          image: ramymohamed/store-front-l8:latest # Front-end store application
+          image: clouddevac/store-front:latest # Front-end store application
           ports:
             - containerPort: 8080 # Front-end app port
               name: store-front
@@ -440,7 +461,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
         - name: store-admin
-          image: ramymohamed/store-admin-l8:latest # Admin interface for store
+          image: clouddevac/store-admin:latest # Admin interface for store
           ports:
             - containerPort: 8081 # Admin app port
               name: store-admin
@@ -510,7 +531,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
         - name: ai-service
-          image: ramymohamed/ai-service-l8:latest
+          image: clouddevac/ai-service:latest
           ports:
             - containerPort: 5001
           env:
